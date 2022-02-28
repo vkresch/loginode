@@ -1,4 +1,8 @@
-<h1>Hi <%= name %></h1>
+<h1>Logged in as <%= name %> </h1>
+<a href="<%= machineurl %> " target="_blank"><%= machineurl %> </a>
+<form action="/genmachine" method="GET">
+    <button type="submit">Generate valid machine link</button>
+</form>
 <form action="/logout?_method=DELETE" method="POST">
     <button type="submit">Log Out</button>
 </form>

@@ -9,6 +9,7 @@ const passport = require("passport")
 const flash = require("express-flash")
 const session = require("express-session")
 const methodOverride = require("method-override")
+const crypto = require("crypto");
 
 const initializePassport = require("./passport-config")
 
@@ -17,7 +18,15 @@ initializePassport(passport,
     id => users.find(user => user.id === id),
 )
 
-const users = []
+const users = [{
+    id: 0,
+    name: "admin",
+    email: process.env.ADMIN_EMAIL,
+    password: process.env.ADMIN_PASS
+}]
+let valid_tag = crypto.randomBytes(16).toString("hex")
+
+console.log(users)
 
 app.set("view-engine", "ejs")
 app.use(express.urlencoded({ extended: false }))
@@ -32,11 +41,26 @@ app.use(passport.session())
 app.use(methodOverride("_method"))
 
 app.get("/", checkAuthenticated, (req, res) => {
-    res.render("index.ejs", { name: req.user.name })
+    machineurl = req.get("host") + "/machine/" + valid_tag
+    res.render("index.ejs", { name: req.user.name, machineurl: machineurl})
 })
 
 app.get("/login", checkNotAuthenticated, (req, res) => {
     res.render("login.ejs")
+})
+
+app.get("/genmachine", checkAuthenticated, (req, res) => {
+    valid_tag = crypto.randomBytes(16).toString("hex")
+    machineurl = req.get("host") + "/machine/" + valid_tag
+    res.render("index.ejs", { name: req.user.name, machineurl: machineurl})
+})
+
+app.get("/machine/:tag_id", (req, res) => {
+    if(req.params.tag_id == valid_tag){
+        res.render("machine.ejs", { tag_id: req.params.tag_id})
+    } else {
+        res.status(404).send("Machine does not exist anymore!")
+    }    
 })
 
 app.post("/login", checkNotAuthenticated, passport.authenticate("local", {
@@ -61,7 +85,6 @@ app.post("/register", checkNotAuthenticated, async (req, res) => {
             }
         )
         res.redirect("/login")
-        
     } catch {
         res.redirect("/register")        
     }
